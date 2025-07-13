@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>SafeChat - Inscription</title>
+<style>
+    body {
+        margin:0; padding:0; height:100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(315deg, #0f0c29 0%, #302b63 74%, #24243e 100%);
+        color:#fff;
+        overflow:hidden;
+    }
+    canvas {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        z-index: -1;
+    }
+    header {
+        text-align: center;
+        font-size: 2.5rem;
+        color: #FF007C;
+        margin-top: 50px;
+        text-shadow: 0 0 20px #FF007C, 0 0 40px #FF00C8;
+        animation: pulse 2s infinite alternate;
+    }
+    @keyframes pulse {
+        from { text-shadow: 0 0 20px #FF007C; }
+        to { text-shadow: 0 0 40px #FF00C8; }
+    }
+    .container {
+        max-width: 400px;
+        margin: 80px auto;
+        background: rgba(0,0,0,0.7);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 0 25px #FF007C;
+        backdrop-filter: blur(12px);
+        animation: fadeIn 1.5s ease;
+    }
+    h2 {
+        text-align: center;
+        color: #FF00C8;
+        margin-bottom: 20px;
+    }
+    form {
+        display: flex;
+        flex-direction: column;
+    }
+    input {
+        margin-bottom: 15px;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        transition: all 0.3s ease;
+        box-shadow: inset 0 0 5px #FF00C8;
+    }
+    input:focus {
+        outline: none;
+        background: rgba(255,0,200,0.2);
+        box-shadow: 0 0 15px #FF00C8;
+    }
+    button {
+        padding: 12px;
+        background: linear-gradient(45deg, #FF00C8, #FF007C);
+        color: #000;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 0 15px #FF007C;
+        transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+    button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 25px #FF00C8;
+    }
+    .login {
+        text-align: center;
+        margin-top: 15px;
+    }
+    .login a {
+        color: #FF00C8;
+        font-weight: bold;
+        text-decoration: none;
+    }
+    .login a:hover {
+        color: #FF007C;
+        text-decoration: underline;
+    }
+    @keyframes fadeIn {
+        from {opacity:0; transform: translateY(-20px);}
+        to {opacity:1; transform: translateY(0);}
+    }
+    /* Styles messages flash */
+    ul.flash-messages {
+        list-style:none;
+        padding: 0;
+        margin-bottom: 15px;
+    }
+    ul.flash-messages li {
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 5px;
+        color: #fff;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    ul.flash-messages li.danger { background-color: #e74c3c; }
+    ul.flash-messages li.warning { background-color: #f39c12; }
+    ul.flash-messages li.success { background-color: #2ecc71; }
+    ul.flash-messages li.info { background-color: #3498db; }
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<header>SafeChat</header>
+<div class="container">
+    <h2>Créer un compte</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-messages">
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('register') }}">
+        <input type="text" name="username" placeholder="Nom d'utilisateur" required />
+        <input type="password" name="password" placeholder="Mot de passe" required />
+        <input type="password" name="password2" placeholder="Confirmer mot de passe" required />
+        <button type="submit" onclick="playClick()">S’inscrire</button>
+    </form>
+    <div class="login">
+        <p>Déjà un compte ? <a href="{{ url_for('login') }}" onclick="playClick()">Se connecter</a></p>
+    </div>
+</div>
+
+<audio id="clickSound" src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3"></audio>
+<script>
+    function playClick() {
+        document.getElementById('clickSound').play();
+    }
+
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    let particlesArray;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    class Particle {
+        constructor(x,y,dx,dy,size,color) {
+            this.x = x; this.y = y;
+            this.dx = dx; this.dy = dy;
+            this.size = size;
+            this.color = color;
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fillStyle = this.color;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = this.color;
+            ctx.fill();
+        }
+        update() {
+            if (this.x + this.size > canvas.width || this.x - this.size < 0) this.dx = -this.dx;
+            if (this.y + this.size > canvas.height || this.y - this.size < 0) this.dy = -this.dy;
+            this.x += this.dx;
+            this.y += this.dy;
+            this.draw();
+        }
+    }
+
+    function init() {
+        particlesArray = [];
+        for(let i=0; i<90; i++){
+            const size = Math.random()*2+1;
+            const x = Math.random()*(canvas.width-size*2);
+            const y = Math.random()*(canvas.height-size*2);
+            const dx = (Math.random()-0.5)*1.2;
+            const dy = (Math.random()-0.5)*1.2;
+            particlesArray.push(new Particle(x,y,dx,dy,size,'#FF00C8'));
+        }
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        particlesArray.forEach(p => p.update());
+    }
+
+    init();
+    animate();
+</script>
+</body>
+</html>
